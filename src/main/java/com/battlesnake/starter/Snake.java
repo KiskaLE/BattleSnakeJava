@@ -168,7 +168,7 @@ public class Snake {
             JsonNode hazards = moveRequest.get("board").get("hazards");
             JsonNode foods = moveRequest.get("board").get("food");
             // create gamemap with invalid moves
-            GameMap gameMap = new GameMap(head, body, board, snakes, hazards, foods);
+            GameMap gameMap = new GameMap(moveRequest);
             gameMap.makeMap();
             
             ArrayList<String> possibleMoves = new ArrayList<>(Arrays.asList("up", "down", "left", "right"));
@@ -204,16 +204,16 @@ public class Snake {
           int headX = head.get("x").asInt();
           int headY = head.get("y").asInt();
           
-          if (gameMap.isValid(headX+1, headY) == false) {
+          if (gameMap.isMoveValid(headX+1, headY) == false) {
             possibleMoves.remove("right");
           }
-          if (gameMap.isValid(headX-1, headY) == false) {
+          if (gameMap.isMoveValid(headX-1, headY) == false) {
             possibleMoves.remove("left");
           }
-          if (gameMap.isValid(headX, headY+1) == false) {
+          if (gameMap.isMoveValid(headX, headY+1) == false) {
             possibleMoves.remove("up");
           }
-          if (gameMap.isValid(headX, headY-1) == false) {
+          if (gameMap.isMoveValid(headX, headY-1) == false) {
             possibleMoves.remove("down");
           }
         }
