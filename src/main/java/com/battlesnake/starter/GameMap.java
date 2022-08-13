@@ -2,7 +2,7 @@ package com.battlesnake.starter;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import jdk.jpackage.internal.Log;
+
 
 import java.lang.Math;
 
@@ -23,14 +23,25 @@ public class GameMap{
   JsonNode hazards;
   JsonNode foods;
 
-  public GameMap(JsonNode head,JsonNode myBodies, JsonNode board,  JsonNode snakes, JsonNode hazards, JsonNode foods) {
-    this.head = head;
-    this.myBodies = myBodies;
-    this.board = board;
-    this.snakes = snakes;
-    this.hazards = hazards;
-    this.foods = foods;
-    
+  //public GameMap(JsonNode head,JsonNode myBodies, JsonNode board,  JsonNode snakes, JsonNode hazards, JsonNode foods) {
+  //  this.head = head;
+  //  this.myBodies = myBodies;
+  //  this.board = board;
+  //  this.snakes = snakes;
+  //  this.hazards = hazards;
+  //  this.foods = foods;
+
+  //  height = board.get("height").asInt();
+  //  width = board.get("width").asInt();
+  //}
+
+  public GameMap(JsonNode game) {
+    head = game.get("you").get("head");
+    myBodies = game.get("you").get("body");
+    board = game.get("board");
+    snakes = board.get("snakes");
+    hazards = board.get("hazards");
+    foods = board.get("food");
     height = board.get("height").asInt();
     width = board.get("width").asInt();
   }
@@ -50,7 +61,7 @@ public class GameMap{
         map[hazard.get("x").asInt()][hazard.get("y").asInt()] = 1;
       }
     }catch(Exception e){
-      Log.error("no hazards");
+
     }
   }
 
@@ -63,7 +74,7 @@ public class GameMap{
         }
       }
     }catch(Exception e){
-      Log.error("no enemies");
+
     }
   }
 
