@@ -1,16 +1,7 @@
 package com.battlesnake.starter;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeCreator;
-
-import org.eclipse.jetty.io.EofException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import spark.Request;
-import spark.Response;
 
 import java.lang.Math;
 
@@ -45,29 +36,13 @@ public class GameMap{
 
   public void makeMap(){
     map = new int[width][height];
-    //reset map
-    for (int i = 0; i<width;i++){
-      for (int j = 0; j<height; j++){
-        map[i][j] = 0;
-      }
-    }
-    //add my body
-    for (int i = 0; i < myBodies.size(); i++){
-      JsonNode myBody = myBodies.get(i);
-      map[myBody.get("x").asInt()][myBody.get("y").asInt()] = 1;
-    }
-    //add enemy snakes body
-    try {
-      for (int i = 0; i < snakes.size(); i++){
-        JsonNode snakeBody = snakes.get(i).get("body");
-        for (int j = 0; j<snakeBody.size(); j++){
-          map[snakeBody.get(j).get("x").asInt()][snakeBody.get(j).get("y").asInt()] = 1;
-        }
-      }
-    }catch(Exception e){
-      
-    }
-    //add hazards
+    resetMap();
+    addMyBody();
+    addEnemySnakes();
+    addHazards();
+  }
+
+  private void addHazards(){
     try{
       for (int i = 0; i < hazards.size(); i++){
         JsonNode hazard = hazards.get(i);
@@ -77,10 +52,37 @@ public class GameMap{
 
     }
   }
-  
+
+  private void addEnemySnakes(){
+    try {
+      for (int i = 0; i < snakes.size(); i++){
+        JsonNode snakeBody = snakes.get(i).get("body");
+        for (int j = 0; j<snakeBody.size(); j++){
+          map[snakeBody.get(j).get("x").asInt()][snakeBody.get(j).get("y").asInt()] = 1;
+        }
+      }
+    }catch(Exception e){
+
+    }
+  }
+
+  private void resetMap(){
+    for (int i = 0; i<width;i++){
+      for (int j = 0; j<height; j++){
+        map[i][j] = 0;
+      }
+    }
+  }
+
+  private void addMyBody(){
+    for (int i = 0; i < myBodies.size(); i++){
+      JsonNode myBody = myBodies.get(i);
+      map[myBody.get("x").asInt()][myBody.get("y").asInt()] = 1;
+    }
+  }
     
 
-  public boolean isValid(int x, int y) {
+  public boolean isMoveValid(int x, int y) {
     try{
       if (map[x][y] == 1) {
       return false;
@@ -92,19 +94,23 @@ public class GameMap{
     }
     
   }
+
   public JsonNode findFood(){
     if (foods.size()>0) {
       int headX = head.get("x").asInt();
-    int headY = head.get("y").asInt();
-    int nearest = 0;
-    int lenght = 100000000;
+      int headY = head.get("y").asInt();
+      int nearest = 0;
+      int minimalDistance = 0;
          
     for (int i = 0; i<foods.size(); i++){
       JsonNode food = foods.get(i);
-      int temp = (Math.abs(food.get("x").asInt() - headX)) + (Math.abs(food.get("y").asInt() - headY));
-      if (temp < lenght){
+      int distance = (Math.abs(food.get("x").asInt() - headX)) + (Math.abs(food.get("y").asInt() - headY));
+      if (i ==0){
+        minimalDistance = distance;
+      }
+      if (distance < minimalDistance){
         nearest = i;
-        lenght = temp;
+        minimalDistance = distance;
       }
     }
     
