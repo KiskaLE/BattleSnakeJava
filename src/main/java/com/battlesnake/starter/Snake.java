@@ -174,7 +174,9 @@ public class Snake {
             ArrayList<String> possibleMoves = new ArrayList<>(Arrays.asList("up", "down", "left", "right"));
 
             // Don't allow your Battlesnake to move back in on it's own neck
-            foodTarget(head, gameMap, possibleMoves);
+            if (Integer.parseInt(moveRequest.get("you").get("health").asText())<50){
+                foodTarget(head, gameMap, possibleMoves);
+            }
             avoid(gameMap, head, possibleMoves);
             
             // Choose a random direction to move in
