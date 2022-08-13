@@ -2,6 +2,7 @@ package com.battlesnake.starter;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jdk.jpackage.internal.Log;
 
 import java.lang.Math;
 
@@ -49,7 +50,7 @@ public class GameMap{
         map[hazard.get("x").asInt()][hazard.get("y").asInt()] = 1;
       }
     }catch(Exception e){
-
+      Log.error("no hazards");
     }
   }
 
@@ -62,7 +63,7 @@ public class GameMap{
         }
       }
     }catch(Exception e){
-
+      Log.error("no enemies");
     }
   }
 
