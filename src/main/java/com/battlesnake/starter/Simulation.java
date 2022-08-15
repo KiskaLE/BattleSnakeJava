@@ -1,7 +1,6 @@
 package com.battlesnake.starter;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -192,14 +191,5 @@ public class Simulation {
         }
         return output;
     }
-
-    @Override
-    public String toString() {
-        String s = "";
-
-        return s;
-    }
-    //TODO return simulaci s nejdelsší životností
-
 
 }

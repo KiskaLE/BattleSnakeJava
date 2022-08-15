@@ -7,9 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
-
 import java.util.*;
-
 import static spark.Spark.*;
 
 /**
@@ -162,16 +160,6 @@ public class Snake {
             snakePath = simulation.simulate(moveRequest, 9, snakePath);
             gameMap.makeMap(moveRequest);
             avoid(gameMap, head, possibleMoves);
-            //simulation.simulate(moveRequest);
-            if (Integer.parseInt(moveRequest.get("you").get("health").asText()) < 50) {
-                foodTarget(head, gameMap, possibleMoves);
-            }
-            if (possibleMoves.size() == 0) {
-                possibleMoves = new ArrayList<>(Arrays.asList("up", "down", "left", "right"));
-                avoid(gameMap, head, possibleMoves);
-            }
-
-            //final int choice = new Random().nextInt(possibleMoves.size());
             String move;
             if (!snakePath.isEmpty()) {
                 move = snakePath.get(0);
