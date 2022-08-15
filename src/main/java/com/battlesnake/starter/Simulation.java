@@ -46,7 +46,7 @@ public class Simulation {
         List<List<String>> paths = new ArrayList<>();
         this.myBodyParts = getMySnakeBodyParts();
         paths = generateCombinations(new String[]{"up", "right", "down", "left"}, numberOfMoves);
-        Collections.shuffle(paths);
+        //Collections.shuffle(paths);
         List<String> longestPath = new ArrayList<>(Arrays.asList("up"));
         for (int j = 0; j < paths.size(); j++) {
             this.map.makeMap(game);
@@ -138,7 +138,10 @@ public class Simulation {
                 lastPartLocation = partLocation;
                 map.changeMapAtLocation(x, y, 1);
                 if (i == bodyParts.size() - 1) {
-                    map.changeMapAtLocation(partLocation[0], partLocation[1], 0);
+                    if (!map.isFood(x, y)){
+                        map.changeMapAtLocation(partLocation[0], partLocation[1], 0);
+                    }
+
                 }
             }
         }

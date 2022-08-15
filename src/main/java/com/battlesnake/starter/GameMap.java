@@ -51,6 +51,7 @@ public class GameMap {
         addMyBody();
         addEnemySnakes();
         addHazards();
+        addFood();
     }
 
     public void changeMapAtLocation(int x, int y, int type) {
@@ -85,6 +86,16 @@ public class GameMap {
 
         }
     }
+    private void addFood(){
+        try{
+            for (int i = 0; i < foods.size(); i++) {
+                JsonNode food = foods.get(i);
+                changeMapAtLocation(food.get("x").asInt(), food.get("y").asInt(), 2);
+            }
+        }catch (Exception e){
+
+        }
+    }
 
     private void resetMap() {
         for (int i = 0; i < width; i++) {
@@ -103,8 +114,16 @@ public class GameMap {
 
 
     public boolean isMoveValid(int x, int y) {
+        return isNotAtLocation(x, y, 1);
+
+    }
+    public boolean isFood(int x, int y){
+        return isNotAtLocation(x, y, 2);
+    }
+
+    private boolean isNotAtLocation(int x, int y, int type){
         try {
-            if (map[x][y] == 1) {
+            if (map[x][y] == type) {
                 return false;
             } else {
                 return true;
@@ -112,9 +131,7 @@ public class GameMap {
         } catch (Exception e) {
             return false;
         }
-
     }
-
     public JsonNode findFood() {
         if (foods.size() > 0) {
             int headX = head.get("x").asInt();
