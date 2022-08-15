@@ -8,21 +8,13 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
-import java.lang.Math;
-
-import static spark.Spark.port;
-import static spark.Spark.post;
-import static spark.Spark.get;
+import static spark.Spark.*;
 
 /**
  * This is a simple Battlesnake server written in Java.
- * 
+ * <p>
  * For instructions see
  * https://github.com/BattlesnakeOfficial/starter-snake-java/README.md
  */
@@ -56,6 +48,9 @@ public class Snake {
      */
     public static class Handler {
 
+        GameMap gameMap;
+        Simulation simulation;
+        List<String> snakePath;
         /**
          * For the start/end request
          */
@@ -97,52 +92,56 @@ public class Snake {
 
         /**
          * This method is called everytime your Battlesnake is entered into a game.
-         * 
+         * <p>
          * Use this method to decide how your Battlesnake is going to look on the board.
          *
          * @return a response back to the engine containing the Battlesnake setup
-         *         values.
+         * values.
          */
         public Map<String, String> index() {
             Map<String, String> response = new HashMap<>();
             response.put("apiversion", "1");
-            response.put("author", "Kiska"); 
-            response.put("color", "#ffbf00"); 
-            response.put("head", "evil"); 
-            response.put("tail", "coffee"); 
+            response.put("author", "Kiska");
+            response.put("color", "#ffbf00");
+            response.put("head", "evil");
+            response.put("tail", "coffee");
             return response;
         }
 
         /**
          * This method is called everytime your Battlesnake is entered into a game.
-         * 
+         * <p>
          * Use this method to decide how your Battlesnake is going to look on the board.
          *
          * @param startRequest a JSON data map containing the information about the game
          *                     that is about to be played.
          * @return responses back to the engine are ignored.
          */
+
         public Map<String, String> start(JsonNode startRequest) {
             LOG.info("START");
+            gameMap = new GameMap();
+            simulation = new Simulation();
+            snakePath = new ArrayList<>();
             return EMPTY;
         }
 
         /**
          * This method is called on every turn of a game. It's how your snake decides
          * where to move.
-         * 
+         * <p>
          * Use the information in 'moveRequest' to decide your next move. The
          * 'moveRequest' variable can be interacted with as
          * com.fasterxml.jackson.databind.JsonNode, and contains all of the information
          * about the Battlesnake board for each move of the game.
-         * 
+         * <p>
          * For a full example of 'json', see
          * https://docs.battlesnake.com/references/api/sample-move-request
          *
          * @param moveRequest JsonNode of all Game Board data as received from the
          *                    Battlesnake Engine.
          * @return a Map<String,String> response back to the engine the single move to
-         *         make. One of "up", "down", "left" or "right".
+         * make. One of "up", "down", "left" or "right".
          */
         public Map<String, String> move(JsonNode moveRequest) {
 
@@ -152,101 +151,91 @@ public class Snake {
                 LOG.error("Error parsing payload", e);
             }
 
-            /*
-             * Example how to retrieve data from the request payload:
-             * 
-             * String gameId = moveRequest.get("game").get("id").asText();
-             * 
-             * int height = moveRequest.get("board").get("height").asInt();
-             * 
-             */
-
             JsonNode body = moveRequest.get("you").get("body");
             JsonNode head = moveRequest.get("you").get("head");
             JsonNode board = moveRequest.get("board");
             JsonNode snakes = moveRequest.get("board").get("snakes");
             JsonNode hazards = moveRequest.get("board").get("hazards");
             JsonNode foods = moveRequest.get("board").get("food");
-            // create gamemap with invalid moves
-            GameMap gameMap = new GameMap(moveRequest);
-            gameMap.makeMap();
-            
-            ArrayList<String> possibleMoves = new ArrayList<>(Arrays.asList("up", "down", "left", "right"));
 
-            // Don't allow your Battlesnake to move back in on it's own neck
-            if (Integer.parseInt(moveRequest.get("you").get("health").asText())<50){
+            ArrayList<String> possibleMoves = new ArrayList<>(Arrays.asList("up", "down", "left", "right"));
+            snakePath = simulation.simulate(moveRequest, 9, snakePath);
+            gameMap.makeMap(moveRequest);
+            avoid(gameMap, head, possibleMoves);
+            //simulation.simulate(moveRequest);
+            if (Integer.parseInt(moveRequest.get("you").get("health").asText()) < 50) {
                 foodTarget(head, gameMap, possibleMoves);
             }
-            avoid(gameMap, head, possibleMoves);
-            
-            // Choose a random direction to move in
-            if (possibleMoves.size()==0){
-              possibleMoves.add("up");
-              possibleMoves.add("down");
-              possibleMoves.add("right");
-              possibleMoves.add("left");
-              avoid(gameMap, head, possibleMoves);
+            if (possibleMoves.size() == 0) {
+                possibleMoves = new ArrayList<>(Arrays.asList("up", "down", "left", "right"));
+                avoid(gameMap, head, possibleMoves);
             }
-                        
-            final int choice = new Random().nextInt(possibleMoves.size());
-            final String move = possibleMoves.get(choice);
-            LOG.info("MOVES {}", Arrays.toString(possibleMoves.toArray()));
-            LOG.info("MOVE {}", move);
 
+            //final int choice = new Random().nextInt(possibleMoves.size());
+            String move;
+            if (!snakePath.isEmpty()) {
+                move = snakePath.get(0);
+            } else {
+                move = "up";
+            }
+
+            LOG.info("MOVES {}", Arrays.toString(snakePath.toArray()));
+            LOG.info("MOVE {}", move);
             Map<String, String> response = new HashMap<>();
             response.put("move", move);
+            snakePath.remove(0);
             return response;
         }
 
         // use map to detemine if move is valid
-        public void avoid(GameMap gameMap, JsonNode head, ArrayList<String> possibleMoves){
-          
-          int headX = head.get("x").asInt();
-          int headY = head.get("y").asInt();
-          
-          if (gameMap.isMoveValid(headX+1, headY) == false) {
-            possibleMoves.remove("right");
-          }
-          if (gameMap.isMoveValid(headX-1, headY) == false) {
-            possibleMoves.remove("left");
-          }
-          if (gameMap.isMoveValid(headX, headY+1) == false) {
-            possibleMoves.remove("up");
-          }
-          if (gameMap.isMoveValid(headX, headY-1) == false) {
-            possibleMoves.remove("down");
-          }
-        }
-        public void foodTarget(JsonNode head, GameMap gameMap, ArrayList<String> possibleMoves) {
-          try{
+        public void avoid(GameMap gameMap, JsonNode head, ArrayList<String> possibleMoves) {
+
             int headX = head.get("x").asInt();
             int headY = head.get("y").asInt();
-            JsonNode foodLocation = gameMap.findFood();
-            int lenght = Math.abs(headX - foodLocation.get("x").asInt()) + Math.abs(headY - foodLocation.get("y").asInt());
-            
-            if (Math.abs(headX+1 - foodLocation.get("x").asInt()) + Math.abs(headY - foodLocation.get("y").asInt()) > lenght) {
-              possibleMoves.remove("right");
+
+            if (gameMap.isMoveValid(headX + 1, headY) == false) {
+                possibleMoves.remove("right");
             }
-            if (Math.abs(headX-1 - foodLocation.get("x").asInt()) + Math.abs(headY - foodLocation.get("y").asInt()) > lenght) {
-              possibleMoves.remove("left");
+            if (gameMap.isMoveValid(headX - 1, headY) == false) {
+                possibleMoves.remove("left");
             }
-            if (Math.abs(headX - foodLocation.get("x").asInt()) + Math.abs(headY+1 - foodLocation.get("y").asInt()) > lenght) {
-              possibleMoves.remove("up");
+            if (gameMap.isMoveValid(headX, headY + 1) == false) {
+                possibleMoves.remove("up");
             }
-            if (Math.abs(headX - foodLocation.get("x").asInt()) + Math.abs(headY-1 - foodLocation.get("y").asInt()) > lenght) {
-              possibleMoves.remove("down");
+            if (gameMap.isMoveValid(headX, headY - 1) == false) {
+                possibleMoves.remove("down");
             }
-          }catch (Exception e) {
-            
-          }
-            
-          
+        }
+
+        public void foodTarget(JsonNode head, GameMap gameMap, ArrayList<String> possibleMoves) {
+            try {
+                int headX = head.get("x").asInt();
+                int headY = head.get("y").asInt();
+                JsonNode foodLocation = gameMap.findFood();
+                int lenght = Math.abs(headX - foodLocation.get("x").asInt()) + Math.abs(headY - foodLocation.get("y").asInt());
+
+                if (Math.abs(headX + 1 - foodLocation.get("x").asInt()) + Math.abs(headY - foodLocation.get("y").asInt()) > lenght) {
+                    possibleMoves.remove("right");
+                }
+                if (Math.abs(headX - 1 - foodLocation.get("x").asInt()) + Math.abs(headY - foodLocation.get("y").asInt()) > lenght) {
+                    possibleMoves.remove("left");
+                }
+                if (Math.abs(headX - foodLocation.get("x").asInt()) + Math.abs(headY + 1 - foodLocation.get("y").asInt()) > lenght) {
+                    possibleMoves.remove("up");
+                }
+                if (Math.abs(headX - foodLocation.get("x").asInt()) + Math.abs(headY - 1 - foodLocation.get("y").asInt()) > lenght) {
+                    possibleMoves.remove("down");
+                }
+            } catch (Exception e) {
+
+            }
+
 
         }
 
         /**
          * This method is called when a game your Battlesnake was in ends.
-         * 
+         * <p>
          * It is purely for informational purposes, you don't have to make any decisions
          * here.
          *
