@@ -37,6 +37,10 @@ public class GameMap {
         this.map = map;
     }
 
+    public int[][] getMap() {
+        return map;
+    }
+
     public void makeMap(JsonNode game) {
         head = game.get("you").get("head");
         myBodies = game.get("you").get("body");

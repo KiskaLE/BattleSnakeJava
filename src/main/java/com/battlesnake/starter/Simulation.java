@@ -40,13 +40,13 @@ public class Simulation {
     //TODO Simulovat hru
     public List<String> simulate(JsonNode game, int numberOfMoves, List<String> snakePath) {
         this.game = game;
-
+        map.makeMap(game);
         me = game.get("you");
         snakes = game.get("board").get("snakes");
         List<List<String>> paths = new ArrayList<>();
         this.myBodyParts = getMySnakeBodyParts();
         paths = generateCombinations(new String[]{"up", "right", "down", "left"}, numberOfMoves);
-        //Collections.shuffle(paths);
+        Collections.shuffle(paths);
         List<String> longestPath = new ArrayList<>(Arrays.asList("up"));
         for (int j = 0; j < paths.size(); j++) {
             this.map.makeMap(game);
@@ -92,7 +92,7 @@ public class Simulation {
                 }
 
                 if (isValid) {
-                    this.map = move(headX, headY, this.myBodyParts, this.map);
+                    this.map = move(headX, headY, this.myBodyParts, map);
                 }
 
 
