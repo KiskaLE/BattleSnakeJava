@@ -6,6 +6,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+//TODO optimalize the simulation
+//TODO add multithreading
+
 public class Simulation {
     public static class BodyPart {
         int x;
@@ -36,19 +39,20 @@ public class Simulation {
         map = new GameMap();
     }
 
-    //TODO Simulovat hru
+
     public List<String> simulate(JsonNode game, int numberOfMoves, List<String> snakePath) {
         this.game = game;
         map.makeMap(game);
         me = game.get("you");
         snakes = game.get("board").get("snakes");
         List<List<String>> paths = new ArrayList<>();
-        this.myBodyParts = getMySnakeBodyParts();
+
         paths = generateCombinations(new String[]{"up", "right", "down", "left"}, numberOfMoves);
         Collections.shuffle(paths);
-        List<String> longestPath = new ArrayList<>(Arrays.asList("up"));
+        List<String> longestPath = new ArrayList<>();
         for (int j = 0; j < paths.size(); j++) {
             this.map.makeMap(game);
+            this.myBodyParts = getMySnakeBodyParts();
             List<String> path = paths.get(j);
             int headX = this.game.get("you").get("head").get("x").asInt();
             int headY = this.game.get("you").get("head").get("y").asInt();
@@ -109,11 +113,11 @@ public class Simulation {
     //TODO opravit simulovanou mapu
 
     private List<BodyPart> getMySnakeBodyParts() {
-        JsonNode meBodys = me.get("body");
+        JsonNode myBodies = me.get("body");
         List<BodyPart> myBody = new ArrayList<>();
         // makes BodyPart class object from JsonNode object
-        for (int i = 0; i < meBodys.size(); i++) {
-            JsonNode get = meBodys.get(i);
+        for (int i = 0; i < myBodies.size(); i++) {
+            JsonNode get = myBodies.get(i);
             myBody.add(new BodyPart(get.get("x").asInt(), get.get("y").asInt()));
         }
         return myBody;
@@ -139,6 +143,9 @@ public class Simulation {
                 if (i == bodyParts.size() - 1) {
                     if (!map.isFood(x, y)){
                         map.changeMapAtLocation(partLocation[0], partLocation[1], 0);
+                    }else{
+                        this.myBodyParts.add(new BodyPart(lastPartLocation[0], lastPartLocation[1]));
+                        break;
                     }
 
                 }
