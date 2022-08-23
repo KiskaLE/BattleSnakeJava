@@ -118,7 +118,6 @@ public class Snake {
 
         public Map<String, String> start(JsonNode startRequest) {
             LOG.info("START");
-            gameMap = new GameMap();
             simulation = new Simulation();
             snakePath = new ArrayList<>();
             return EMPTY;
@@ -156,10 +155,7 @@ public class Snake {
             JsonNode hazards = moveRequest.get("board").get("hazards");
             JsonNode foods = moveRequest.get("board").get("food");
 
-            ArrayList<String> possibleMoves = new ArrayList<>(Arrays.asList("up", "down", "left", "right"));
-            snakePath = simulation.simulate(moveRequest, 8, snakePath);
-            gameMap.makeMap(moveRequest);
-            avoid(gameMap, head, possibleMoves);
+            snakePath = simulation.simulate(moveRequest, 10);
             String move;
             if (!snakePath.isEmpty()) {
                 move = snakePath.get(0);
@@ -171,7 +167,6 @@ public class Snake {
             LOG.info("MOVE {}", move);
             Map<String, String> response = new HashMap<>();
             response.put("move", move);
-            //snakePath.remove(0);
             return response;
         }
 

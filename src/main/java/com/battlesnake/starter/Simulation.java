@@ -38,10 +38,8 @@ public class Simulation{
         map = new GameMap();
     }
 
-    private void init(JsonNode game, int numberOfMoves, List<String> snakePath){
 
-    }
-    public List<String> simulate(JsonNode game, int numberOfMoves, List<String> snakePath) {
+    public List<String> simulate(JsonNode game, int numberOfMoves) {
         this.game = game;
         this.me = game.get("you");
         this.snakes = game.get("board").get("snakes");
@@ -52,7 +50,6 @@ public class Simulation{
             e.printStackTrace();
         }
         List<String> longestPath = new ArrayList<>();
-
         Collections.shuffle(paths);
         for (int i = 0; i < paths.size(); i++) {
             if (i == 0){
@@ -64,18 +61,13 @@ public class Simulation{
             }
         }
         return longestPath;
-
-
     }
-
 
     /*
     Generates all combinations
      */
     private List<List<String>> generateCombinations(String[] moves, int length) throws InterruptedException {
-        List<String> movesList = new ArrayList<>(Arrays.asList(moves));
         List<List<String>> list = new ArrayList<>();
-
         list.add(new ArrayList<>());
         for (int i = 0; i < length; i++) {
             GenerationHelperThread t = new GenerationHelperThread(list, moves, game);
@@ -132,7 +124,8 @@ public class Simulation{
         }
 
         private void generationHelper(List<List<String>> combinations, String[] moves) {
-            List<List<String>> output = new ArrayList<>();
+            List<List<String>> out = new ArrayList<>();
+            List<String> longest = new ArrayList<>();
             for (int i = 0; i<combinations.size(); i++) {
                 List<String> combination = combinations.get(i);
                 List<String> movesList = new ArrayList<>(Arrays.asList(moves));
@@ -153,20 +146,25 @@ public class Simulation{
                             break;
                     }
                 }
-                int max = movesList.size();
-                for (int j = 0; j < max; j++) {
+                boolean isValid = false;
+                for (int j = 0; j < movesList.size(); j++) {
                     List<String> temp = new ArrayList<>(combination);
                     temp.add(movesList.get(j));
+
+
                     if (isValidPath(temp)){
-                        output.add(temp);
-                    }else{
-                        output.add(combination);
+                        out.add(temp);
+                        isValid = true;
                     }
-
                 }
-
+                if (!isValid && longest.size() < combination.size()){
+                    longest = combination;
+                }
             }
-            this.output = new ArrayList<>(output);
+            if (out.isEmpty()){
+                out.add(longest);
+            }
+            this.output = new ArrayList<>(out);
         }
 
         private List<BodyPart> getMySnakeBodyParts() {
