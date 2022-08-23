@@ -157,7 +157,7 @@ public class Snake {
             JsonNode foods = moveRequest.get("board").get("food");
 
             ArrayList<String> possibleMoves = new ArrayList<>(Arrays.asList("up", "down", "left", "right"));
-            snakePath = simulation.simulate(moveRequest, 9, snakePath);
+            snakePath = simulation.simulate(moveRequest, 8, snakePath);
             gameMap.makeMap(moveRequest);
             avoid(gameMap, head, possibleMoves);
             String move;

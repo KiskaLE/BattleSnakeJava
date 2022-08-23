@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-//TODO optimalize the simulation
 //TODO add multithreading
 
 public class Simulation {
@@ -28,10 +27,8 @@ public class Simulation {
     private JsonNode game;
     private JsonNode me;
     private JsonNode snakes;
-
     private GameMap map;
     private List<BodyPart> myBodyParts;
-
     private List<String> moves;
 
     public Simulation() {
@@ -42,75 +39,27 @@ public class Simulation {
 
     public List<String> simulate(JsonNode game, int numberOfMoves, List<String> snakePath) {
         this.game = game;
-        map.makeMap(game);
-        me = game.get("you");
-        snakes = game.get("board").get("snakes");
-        List<List<String>> paths = new ArrayList<>();
-
-        paths = generateCombinations(new String[]{"up", "right", "down", "left"}, numberOfMoves);
-        Collections.shuffle(paths);
+        this.me = game.get("you");
+        this.snakes = game.get("board").get("snakes");
+        List<List<String>> paths = generateCombinations(new String[]{"up", "right", "down", "left"}, numberOfMoves);
         List<String> longestPath = new ArrayList<>();
-        for (int j = 0; j < paths.size(); j++) {
-            this.map.makeMap(game);
-            this.myBodyParts = getMySnakeBodyParts();
-            List<String> path = paths.get(j);
-            int headX = this.game.get("you").get("head").get("x").asInt();
-            int headY = this.game.get("you").get("head").get("y").asInt();
-            boolean isValid = true;
-            for (int i = 0; i < path.size(); i++) {
-                String x = path.get(i);
-                if (isValid) {
-                    switch (x) {
-                        case "up":
-                            if (map.isMoveValid(headX, headY + 1)) {
-                                headY++;
-                            } else {
-                                isValid = false;
-                            }
-                            break;
-                        case "right":
-                            if (map.isMoveValid(headX + 1, headY)) {
-                                headX++;
-                            } else {
-                                isValid = false;
-                            }
-                            break;
-                        case "down":
-                            if (map.isMoveValid(headX, headY - 1)) {
-                                headY--;
-                            } else {
-                                isValid = false;
-                            }
-                            break;
-                        case "left":
-                            if (map.isMoveValid(headX - 1, headY)) {
-                                headX--;
-                            } else {
-                                isValid = false;
-                            }
-                            break;
-                    }
-                } else {
-                    path.remove(i);
+
+        Collections.shuffle(paths);
+        for (int i = 0; i < paths.size(); i++) {
+            if (i == 0){
+                longestPath = paths.get(i);
+            }else{
+                if (longestPath.size()<paths.get(i).size()){
+                    longestPath = paths.get(i);
                 }
-
-                if (isValid) {
-                    this.map = move(headX, headY, this.myBodyParts, map);
-                }
-
-
             }
-
-            if (longestPath.size() < path.size()) {
-                longestPath = path;
-            }
-
         }
         return longestPath;
 
 
     }
     //TODO opravit simulovanou mapu
+
 
     private List<BodyPart> getMySnakeBodyParts() {
         JsonNode myBodies = me.get("body");
@@ -157,22 +106,24 @@ public class Simulation {
     /*
     Generates all combinations
      */
-    private List<List<String>> generateCombinations(String[] moves, int lenght) {
+    private List<List<String>> generateCombinations(String[] moves, int length) {
         List<String> movesList = new ArrayList<>(Arrays.asList(moves));
         List<List<String>> list = new ArrayList<>();
+
         list.add(new ArrayList<>());
-        for (int i = 0; i < lenght; i++) {
-            list = helper(list, moves);
+        for (int i = 0; i < length; i++) {
+            list = generationHelper(list, moves);
         }
         return list;
     }
 
-    private List<List<String>> helper(List<List<String>> combinations, String[] moves) {
+    private List<List<String>> generationHelper(List<List<String>> combinations, String[] moves) {
         List<List<String>> output = new ArrayList<>();
-        for (List<String> combination : combinations) {
-            //removes last move to not generate possible move to hit head
+        for (int i = 0; i<combinations.size(); i++) {
+            List<String> combination = combinations.get(i);
             List<String> movesList = new ArrayList<>(Arrays.asList(moves));
-            if (combination.size() > 0) {
+            //removes last move to not generate possible move to hit head
+            if (combination.size() > 1) {
                 switch (combination.get(combination.size() - 1)) {
                     case "up":
                         movesList.remove("down");
@@ -189,14 +140,80 @@ public class Simulation {
                 }
             }
             int max = movesList.size();
-            for (int i = 0; i < max; i++) {
+            for (int j = 0; j < max; j++) {
                 List<String> temp = new ArrayList<>(combination);
-                temp.add(movesList.get(i));
-                output.add(temp);
+                temp.add(movesList.get(j));
+                if (isValidPath(temp)){
+                    output.add(temp);
+                }else{
+                    output.add(combination);
+                }
+
             }
 
         }
         return output;
     }
 
+    private boolean isValidPath(List<String> path){
+        this.map.makeMap(this.game);
+        this.myBodyParts = getMySnakeBodyParts();
+        int headX = this.game.get("you").get("head").get("x").asInt();
+        int headY = this.game.get("you").get("head").get("y").asInt();
+
+        for (int i = 0; i < path.size(); i++) {
+            String x = path.get(i);
+            if (i< path.size()-1) {
+                switch (x) {
+                    case "up":
+                        headY++;
+                        break;
+                    case "right":
+                        headX++;
+                        break;
+                    case "down":
+                        headY--;
+                        break;
+                    case "left":
+                        headX--;
+                        break;
+                }
+                this.map = move(headX, headY, this.myBodyParts, map);
+            }else{
+                    switch (x) {
+                        case "up":
+                            if (map.isMoveValid(headX, headY + 1)) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+
+                        case "right":
+                            if (map.isMoveValid(headX + 1, headY)) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+
+                        case "down":
+                            if (map.isMoveValid(headX, headY - 1)) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+
+                        case "left":
+                            if (map.isMoveValid(headX - 1, headY)) {
+                                return true;
+                            } else {
+                                return false;
+                            }
+
+                    }
+            }
+        }
+        return false;
+    }
+
 }
+
