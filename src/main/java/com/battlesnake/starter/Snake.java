@@ -171,7 +171,7 @@ public class Snake {
             LOG.info("MOVE {}", move);
             Map<String, String> response = new HashMap<>();
             response.put("move", move);
-            snakePath.remove(0);
+            //snakePath.remove(0);
             return response;
         }
 
