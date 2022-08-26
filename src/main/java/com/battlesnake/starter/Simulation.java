@@ -201,7 +201,7 @@ public class Simulation{
                     longest = combination;
                 }
             }
-            if (out.isEmpty()){
+            if (!longest.isEmpty()){
                 out.add(longest);
             }
             for (int i = 0; i < out.size(); i++) {
@@ -223,9 +223,11 @@ public class Simulation{
         private GameMap move(int x, int y, List<BodyPart> bodyParts, GameMap map) {
             int[] lastPartLocation = new int[2];
             int[] partLocation = new int[2];
+            boolean growth = false;
             for (int i = 0; i < bodyParts.size(); i++) {
                 BodyPart part = bodyParts.get(i);
                 if (i == 0) {
+                    if (map.isFood(x, y)) growth = true;
                     lastPartLocation[0] = part.x;
                     lastPartLocation[1] = part.y;
                     part.setLocation(x, y);
@@ -237,7 +239,7 @@ public class Simulation{
                     lastPartLocation = partLocation;
                     map.changeMapAtLocation(x, y, 1);
                     if (i == bodyParts.size() - 1) {
-                        if (!map.isFood(x, y)){
+                        if (!growth){
                             map.changeMapAtLocation(partLocation[0], partLocation[1], 0);
                         }else{
                             this.myBodyParts.add(new BodyPart(lastPartLocation[0], lastPartLocation[1]));
