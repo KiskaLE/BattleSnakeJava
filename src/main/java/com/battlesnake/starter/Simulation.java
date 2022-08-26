@@ -39,16 +39,12 @@ public class Simulation{
     }
 
 
-    public List<String> simulate(JsonNode game, int numberOfMoves) {
+    public List<String> simulate(JsonNode game, int numberOfMoves, int cores) {
         this.game = game;
         this.me = game.get("you");
         this.snakes = game.get("board").get("snakes");
         List<List<String>> paths = null;
-        try {
-            paths = generateCombinations(new String[]{"up", "right", "down", "left"}, numberOfMoves);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        paths = generateCombinations(new String[]{"up", "right", "down", "left"}, numberOfMoves, cores);
         List<String> longestPath = new ArrayList<>();
         Collections.shuffle(paths);
         for (int i = 0; i < paths.size(); i++) {
@@ -66,34 +62,78 @@ public class Simulation{
     /*
     Generates all combinations
      */
-    private List<List<String>> generateCombinations(String[] moves, int length) throws InterruptedException {
+    private List<List<String>> generateCombinations(String[] moves, int length, int cores) {
         List<List<String>> list = new ArrayList<>();
         list.add(new ArrayList<>());
+        int numberOfThreads = cores;
         for (int i = 0; i < length; i++) {
-            GenerationHelperThread t = new GenerationHelperThread(list, moves, game);
-            Thread thread = new Thread(t);
-            thread.start();
-            thread.join();
-            list = new ArrayList<>(t.getCombinations());
+            if (list.size()<numberOfThreads){
+                GenerationHelperThread t = new GenerationHelperThread(list, moves, game);
+                Thread thread = new Thread(t);
+                thread.start();
+                try {
+                    thread.join();
+                } catch (InterruptedException e) {
+                    System.out.println("error");
+                }
+                list = new ArrayList<>(t.getCombinations());
+            }else{
+                List<GenerationHelperThread> helpers = new ArrayList<>();
+                List<Thread> threads = new ArrayList<>();
+                List<List<String>>[] movesArrays = split(list, numberOfThreads);
+                for (int j = 0; j < movesArrays.length; j++) {
+                    List<List<String>> get = movesArrays[j];
+                    GenerationHelperThread thread = new GenerationHelperThread(get, moves, game);
+                    helpers.add(thread);
+                    threads.add(new Thread(thread));
+                }
+                for (int j = 0; j < threads.size(); j++) {
+                    threads.get(j).start();
+                }
+                for (int j = 0; j < threads.size(); j++) {
+                    try {
+                        threads.get(j).join();
+                    } catch (InterruptedException e) {
+                        System.out.println("error");
+                    }
+                }
+                for (int j = 0; j < helpers.size(); j++) {
+                    List<List<String>> temp = helpers.get(j).getCombinations();
+                    list = new ArrayList<>();
+                    for (int k = 0; k < helpers.get(j).getCombinations().size(); k++) {
+                        list.add(helpers.get(j).getCombinations().get(k));
+                    }
+                }
+            }
+
         }
         return list;
     }
 
-    private List<List<List<String>>> split(List<List<String>> moves, int number){
-        List<List<List<String>>> out = new ArrayList<>();
+    private List<List<String>>[] split(List<List<String>> moves, int number){
+        int min = 0;
+        int max = moves.size();
+        int result = max/number;
+        List<List<String>>[] out = new List[number];
+        boolean isOdd;
+        if (moves.size()%number == 0){
+            isOdd = false;
+        }else{
+            isOdd = true;
+        }
         for (int i = 0; i < number; i++) {
-            List<List<String>> temp = new ArrayList<>();
-            int count;
-            if (moves.size()%2 == 0){
-                count = moves.size()/number;
+            if (isOdd && i == 0){
+                min = (max - (result))-1;
             }else{
-                count = moves.size()/number+1;
+                min = max - (result);
             }
-            for (int j = 0; j < count; j++) {
-                temp.add(moves.get(0));
-                moves.remove(0);
+
+            out[i] = new ArrayList<>();
+            List<List<String>> get = out[i];
+            for (int j = min; j < max; j++) {
+                get.add(moves.get(j));
             }
-            out.add(temp);
+            max = min;
         }
         return out;
     }
@@ -104,7 +144,7 @@ public class Simulation{
         JsonNode game;
         GameMap map;
         List<BodyPart> myBodyParts;
-        List<List<String>> output;
+        List<List<String>> output = new ArrayList<>();
 
         @Override
         public void run() {
@@ -164,7 +204,9 @@ public class Simulation{
             if (out.isEmpty()){
                 out.add(longest);
             }
-            this.output = new ArrayList<>(out);
+            for (int i = 0; i < out.size(); i++) {
+                output.add(out.get(i));
+            }
         }
 
         private List<BodyPart> getMySnakeBodyParts() {

@@ -155,7 +155,7 @@ public class Snake {
             JsonNode hazards = moveRequest.get("board").get("hazards");
             JsonNode foods = moveRequest.get("board").get("food");
 
-            snakePath = simulation.simulate(moveRequest, 10);
+            snakePath = simulation.simulate(moveRequest, 300, 8);
             String move;
             if (!snakePath.isEmpty()) {
                 move = snakePath.get(0);
