@@ -122,7 +122,7 @@ public class GameMap {
 
     }
     public boolean isFood(int x, int y){
-        return isNotAtLocation(x, y, 2);
+        return !isNotAtLocation(x, y, 2);
     }
 
     private boolean isNotAtLocation(int x, int y, int type){
